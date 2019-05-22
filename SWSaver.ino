@@ -5,6 +5,7 @@
     ::  Build:        :: Alpha                          ::
     ::  Codename:     :: AZDDS                          ::
     ::  Author:       :: Diyar Hussein                  ::
+    ::  Last updated  :: Monday, May 20, 2019           ::
     ::                                                  ::
     ::               `  ©  2016 - 2019                  ::
     ::  ::  ::  ::  ::  ::  ::  ::  ::  ::  ::  ::  ::  ::
@@ -132,19 +133,20 @@ MFRC522 mfrc522(SS_RFID, RST_RFID);
 #define led1  32              //  For debug purpose only.
 #define led2  33              //  For debug purpose only.
 #define led3  34              //  For debug purpose only.
-int sensorSwitchStatus = 0; //  Initialize the Sensor Switch Status in zero value for not pressed.
+int sensorSwitchStatus = 0;   //  Define the Sensor Switch Status in zero value assuming is not pressed.
 
 
 void setup() {
   Serial.begin(115200);
+  Serial.println(F("  #sis000  Initialize and confirm Serial connected."));
   while (!Serial);
+  Serial.println(F("  #sip000  Initialize Pins."));
   pinMode(led0, OUTPUT);
   pinMode(led1, OUTPUT);
   pinMode(led2, OUTPUT);
   pinMode(led3, OUTPUT);
   pinMode(sensorSwitch, INPUT);
-  Serial.println("  #i0x0000  Starting Iniliaizing the components");
-  Serial.println("  #i0x0001  Initialize Liquid Crystal Display ");
+  Serial.println(F("  #sil000  Initialize Liquid Crystal Display."));
   lcd0.init();
   lcd0.backlight();
   lcd0.setCursor(0, 0);
@@ -155,12 +157,13 @@ void setup() {
   lcd1.print("Welcome...");
   lcd1.setCursor(2, 1);
   lcd1.print("2016 - 2019");
-  Serial.println("  #0ix0002  Initialize Ethernet Shield Network Module");
+  Serial.println(F("  #sie000  Initialize Ethernet Shield Network Module"));
   ethernetHardwareChecker();
-  Serial.println("  #0ix0003  Initialize MySQL Server connection");
+  Serial.println(F("  #sim000  Initialize MySQL Server connection"));
   mysqlServerConnection();
   lcd0.clear();
   lcd1.clear();
+  Serial.println(F("  #sir000  Initialize RFID-RC522."));
   mfrc522.PCD_Init();
 }
 
@@ -194,15 +197,15 @@ void ethernetHardwareChecker () {
   Ethernet.begin(physicalAddress);
   // Check for Ethernet hardware present
   if (Ethernet.hardwareStatus() == EthernetNoHardware) {
-    Serial.println("Ethernet shield was not found.  Sorry, can't run without hardware. :(");
+    Serial.println(F("  #sie001 Ethernet shield was not found.  Sorry, can't run without hardware. :("));
     while (true) {
       delay(1); // do nothing, no point running without Ethernet hardware
     }
   }
   if (Ethernet.linkStatus() == LinkOFF) {
-    Serial.println("Ethernet cable is not connected.");
+    Serial.println(F("Ethernet cable is not connected."));
   }
-  Serial.print(" Local IP Address for Ethernet Shield Network Module: ");
+  Serial.print(F("  #sie002 Assign a local IP Address for Ethernet Shield Network Module: "));
   Serial.println(Ethernet.localIP());
 }
 
@@ -220,7 +223,7 @@ void mysqlServerConnection() {
   else
   {
     lcd1.clear();
-    Serial.println("Failed to connect, try again!");
+    Serial.println(F("  #sim001 Failed to connect, try again!"));
     lcd1.setCursor(1, 0);
     lcd1.print("Error connect");
     lcd1.setCursor(0, 1);
@@ -231,13 +234,13 @@ void mysqlServerConnection() {
 }
 
 void loadHanger() {
-  Serial.println("  #l0x0000 Detected Sensor Switch a new coat on Hanger.");
+  Serial.println(F("  #ll000 Detected Sensor Switch a new coat on Hanger.\n\r #llr000 Software turn off RFID device."));
 
   rfid_Read.PCD_SoftPowerDown();
   lcd1.clear();
   lcd1.setCursor(1, 0);
   lcd1.print(" Processing...");
-  Serial.println("  #llx0001 Running MySQL Connector operation for hangerStatus statement.");
+  Serial.println(F("  #llm000 Running MySQL Connector operation for hangerStatus statement."));
 
   int hangerStatusCount = 0;
   MySQL_Cursor *mysqlCursor = new MySQL_Cursor(&MySQLConnection);
@@ -252,11 +255,10 @@ void loadHanger() {
     }
   } while (row != NULL);
 
-  Serial.print("  #llx0002 MySQL Connector operation is finished and the Hanger Status available is: ");
-  Serial.println(hangerStatusCount);
+  Serial.println(String("") + "  #llm001 MySQL Connector operation is finished and the Hanger Status available is: " + hangerStatusCount);
   if (hangerStatusCount == 1) {
 
-    Serial.println("  #llx0003 MySQL Connector operation for hangerNumber statement to select that first top available.");
+    Serial.println(F("  #llm002 MySQL Connector operation for hangerNumber statement to select that first top available."));
 
     row_values *row = 0;
     int numHa = 0;
@@ -270,23 +272,19 @@ void loadHanger() {
       }
     } while (row != NULL);
 
-    Serial.print("  #llx0004 MySQL Connector operation for hangerNumber statement is finished, and the Hanger Number is: ");
-    Serial.println(numHa);
-    Serial.println("  #llx0005 MySQL Connector operation for hangerUpdate statement to set a new value for selected Hanger");
-    Serial.println("  #llx0006 Generating a new 4 digits number as ID Key for the selected Hanger");
+    Serial.println(String("") + "  #llm003 MySQL Connector operation for hangerNumber statement is finished, and the Hanger Number is: " + numHa + "\n\r  #llm004 MySQL Connector operation for hangerUpdate statement to set a new value for selected Hanger.\n\r  #llm005 Generating a new 4 digits number as ID Key for the selected Hanger");
     randomSeed(analogRead(A0));
     unsigned int firstGenerator = random(1000, 8999);
     unsigned int secondGenerator = random(100, 899);
     unsigned int thirdGenerator = random(99);
     unsigned int fourthGenerator = random(3);
     unsigned int idKey = firstGenerator + secondGenerator + thirdGenerator + fourthGenerator;
-    Serial.print("  #llx0007 Generator of ID Key is finished, the ID Key is: ");
-    Serial.println(idKey);
+    Serial.println(String("") + "  #ll001 Generator of ID Key is finished, the ID Key is: " + idKey);
     int reserved = 2;
     sprintf(query, updateHanger, reserved, idKey, numHa);
     // updateHanger[] = "UPDATE hanger.hanger SET hangerStatus = %d, idKey = %d WHERE hangerNumber = %d";
     mysqlCursor->execute(query);
-    Serial.println("  #llx0008 MySQL Connector operation for hangerUpdate statement is finishedd, run SELECT statement for MySQL Server view the changes");
+    Serial.println(F("  #llm006 MySQL Connector operation for hangerUpdate statement is finishedd, run SELECT statement for MySQL Server view the changes"));
 
     ///  Loop statement of Countdown Timer for User Selection
 
@@ -309,8 +307,7 @@ void loadHanger() {
       ///   Waiting for decision by Keypad input or conitune after deadline
 
       if  (customKey) {
-        Serial.println(F("  #luk0000 Detected input from Keypad."));
-        Serial.println(F("  #luk0001  Recording the types from Keypad."));
+        Serial.println(F("  #llk000 Detected input from Keypad.\n\r  #llk001  Recording the types from Keypad."));
         tempId[idCounter] = customKey;
         lcd0.setCursor(14, 0);
         lcd0.print(tempId[idCounter]);
@@ -320,7 +317,7 @@ void loadHanger() {
         lcd0.clear();
         lcd1.clear();
         if (strcmp(tempId, rfidOption)) {
-          Serial.println(F("  #luk0002  Continue by display ID Key on LCD."));
+          Serial.println(F("  #llk0002  Continue by display ID Key on LCD."));
           lcd0.setCursor(0, 0);
           lcd0.print("SWSaver v0.03");
           lcd1.setCursor(1, 0);
@@ -333,7 +330,7 @@ void loadHanger() {
           break;
         }
         else {
-          Serial.println(F("  #luk0003  Select A option for write ID Key on RFID Tag."));
+          Serial.println(F("  #llk003  Select A option for write ID Key on RFID Tag."));
           lcd0.setCursor(0, 0);
           lcd0.print("SWSaver v0.03");
           lcd1.setCursor(0, 0);
@@ -347,6 +344,7 @@ void loadHanger() {
           //######::  ::  RFID-RC522 Write  ::  ::######//
           //********************************************//
 
+          Serial.println(F("  #llw000 Software turn on RFID device."));
           mfrc522.PCD_SoftPowerUp();
           // Prepare key - all keys are set to FFFFFFFFFFFFh at chip delivery from the factory.
           MFRC522::MIFARE_Key key;
@@ -362,14 +360,13 @@ void loadHanger() {
             return;
           }
 
-          Serial.print(F("Card UID:"));    //Dump UID
+          Serial.print(F("  #llw001 Card UID:"));    //Dump UID
           for (byte i = 0; i < mfrc522.uid.size; i++) {
             Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
             Serial.print(mfrc522.uid.uidByte[i], HEX);
           }
-          Serial.print(F(" PICC type: "));   // Dump PICC type
           MFRC522::PICC_Type piccType = mfrc522.PICC_GetType(mfrc522.uid.sak);
-          Serial.println(mfrc522.PICC_GetTypeName(piccType));
+          Serial.println(String("") + " #llr002 PICC type: " + mfrc522.PICC_GetTypeName(piccType));
 
           byte buffer[34];
           byte block;
@@ -382,38 +379,34 @@ void loadHanger() {
           //Serial.println(F("Authenticating using key A..."));
           status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
           if (status != MFRC522::STATUS_OK) {
-            Serial.print(F("PCD_Authenticate() failed: "));
-            Serial.println(mfrc522.GetStatusCodeName(status));
+            Serial.print(String("") + " #llw003 PCD_Authenticate() failed: " + mfrc522.GetStatusCodeName(status));
             return;
           }
-          else Serial.println(F("PCD_Authenticate() success: "));
+          else Serial.println(String("") + "  #llw004 PCD_Authenticate() success: ");
 
           // Write block
           status = mfrc522.MIFARE_Write(block, buffer, 16);
           if (status != MFRC522::STATUS_OK) {
-            Serial.print(F("MIFARE_Write() failed: "));
-            Serial.println(mfrc522.GetStatusCodeName(status));
+            Serial.print(String("") + " #llw004 MIFARE_Write() failed: " + mfrc522.GetStatusCodeName(status));
             return;
           }
-          else Serial.println(F("MIFARE_Write() success: "));
+          else Serial.println(String("") + "  #llw005 MIFARE_Write() success: ");
 
           block = 2;
-          //Serial.println(F("Authenticating using key A..."));
+          Serial.println(F("  #llw006 Authenticating using key A..."));
           status = mfrc522.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, block, &key, &(mfrc522.uid));
           if (status != MFRC522::STATUS_OK) {
-            Serial.print(F("PCD_Authenticate() failed: "));
-            Serial.println(mfrc522.GetStatusCodeName(status));
+            Serial.print(String("") + " #llw007 PCD_Authenticate() failed: " + mfrc522.GetStatusCodeName(status));
             return;
           }
 
           // Write block
           status = mfrc522.MIFARE_Write(block, &buffer[16], 16);
           if (status != MFRC522::STATUS_OK) {
-            Serial.print(F("MIFARE_Write() failed: "));
-            Serial.println(mfrc522.GetStatusCodeName(status));
+            Serial.print(String("") + " #llw008 MIFARE_Write() failed: " + mfrc522.GetStatusCodeName(status));
             return;
           }
-          else Serial.println(F("MIFARE_Write() success: "));
+          else Serial.println(F(" #llw009 MIFARE_Write() success: "));
 
           Serial.println(" ");
           mfrc522.PICC_HaltA(); // Halt PICC
@@ -439,10 +432,10 @@ void loadHanger() {
     lcd1.print(idKey);
     lcd1.setCursor(3, 1);
     lcd1.print("2016 - 2019");
-    
-    Serial.println("  #llx0010 Passing the Hanger Number to the Stepper Motors");
+
+    Serial.println(F("  #llo000 Passing the Hanger Number to the Stepper Motors"));
     if (numHa == 1) {
-      Serial.println("  #llx0011 Motor Controller operating the Hanger number 1");
+      Serial.println(F("  #llo001 Motor Controller operating the Hanger number 1"));
       baseMotor1();
       linearMotor1();
       linearMotorReturnToHome1();
@@ -450,19 +443,19 @@ void loadHanger() {
       delay(500);
     }
     else if (numHa == 2) {
-      Serial.println("  #llx0012 Motor Controller operating the Hanger number 2");
+      Serial.println(F("  #llo002 Motor Controller operating the Hanger number 2"));
       baseMotor2();
       linearMotor2();
       linearMotorReturnToHome2();
       baseMotorReturnToHome2();
       delay(500);
     }
-    Serial.println("  #llx0013 Operation for checking Hanger, number Hanger, and ID Key generating is finished.");
+    Serial.println(F("  #ll002 Operation for checking Hanger, number Hanger, and ID Key generating is finished."));
     delay(2000);
     lcd1.clear();
 
   } else {
-    Serial.println("  #llx0014 No place availalble, Out put the message on Display about the status!");
+    Serial.println(F("  #ll003 No place availalble, Out put the message on Display about the status!"));
     lcd1.clear();
     lcd1.setCursor(3, 0);
     lcd1.print("It Is Full");
@@ -471,19 +464,16 @@ void loadHanger() {
     delay(5000);
   }
   delay(5000);
-  Serial.print("  #llx0015 Memory usage before deleting the MySQL Cursor / Packets: ");
-  Serial.println(memoryUsage());
+  Serial.println(String("") + "  #llm007 Memory usage before deleting the MySQL Cursor / Packets: " + memoryUsage());
   delete mysqlCursor;
-  Serial.print("  #llx0016 Memory usage after deteling the MySQL Cursor / Packets: ");
-  Serial.println(memoryUsage());
+  Serial.println(String("") + "  #llm008 Memory usage after deteling the MySQL Cursor / Packets: " + memoryUsage());
   lcd0.clear();
   lcd1.clear();
   clearTemp();
 }
 void unloadHanger() {
   if  (customKey) {
-    Serial.println("  #lux0000 Detected input from Keypad.");
-    Serial.println("  #lux0001  Recording the types from Keypad.");
+    Serial.println(F("  #luk000 Detected input from Keypad.\n\r  #lux0001  Recording the types from Keypad."));
     tempId[idCounter] = customKey;
     lcd1.setCursor(idCounter, 0);
     lcd1.print(tempId[idCounter]);
@@ -492,10 +482,7 @@ void unloadHanger() {
   if (idCounter == idLength - 1) {
     int idTyped = atol(tempId);
     if (idTyped != 0) {
-      Serial.print("  #lux0002 The ID Key recorded ( ");
-      Serial.print(idTyped);
-      Serial.println(" )");
-      Serial.println("  #lux0003  Running MySQL Connector operation for idSelector Statement.");
+      Serial.println(String("") + "  #luk001 The ID Key recorded ( " + idTyped + " )" + "\n\r  #lum000  Running MySQL Connector operation for idSelector Statement.");
       MySQL_Cursor *mysqlCursor = new MySQL_Cursor(&MySQLConnection);
 
       row_values *row = NULL;
@@ -509,18 +496,15 @@ void unloadHanger() {
           idDB = atol(row->values[0]);
         }
       } while (row != NULL);
-      Serial.println("  #lux0004  MySQL Connector operation is finished.");
-      Serial.println("  #lux0005 Verifying the typed ID Key with Database.");
+      Serial.println(F("  #lum001  MySQL Connector operation is finished.\n\r  #lum002 Verifying the typed ID Key with Database."));
 
       if (!strcmp(idTyped, idDB)) {
-        Serial.println("  #lux0006  Entered correct ID Key.");
+        Serial.println(F("  #luk002  Entered correct ID Key."));
         lcd1.clear();
         lcd1.setCursor(0, 0);
         lcd1.print("Please wait...");
 
-        Serial.println("  #lux0008   Running MySQL Connector operation for unloadHa statement.");
-        Serial.println(idDB);
-        Serial.println(idTyped);
+        Serial.println(String("") + "  #lum003   Running MySQL Connector operation for unloadHa statement.\n\r ID of Database: ." + idDB + " and ID Key Typed:" + idTyped);
         int numHa = 0;
         row_values *row = NULL;
         sprintf(query, unloadHa, idTyped);
@@ -532,9 +516,7 @@ void unloadHanger() {
             numHa = atol(row->values[0]);
           }
         } while (row != NULL);
-        Serial.print(" The Hanger Number from unloadHa statement is: ");
-        Serial.println(numHa);
-        Serial.print("  #lux0009 The ID Key belong to the Hanger number: ");
+        Serial.println(String("") + " #lum004 The Hanger Number from unloadHa statement is: " + numHa + "\n\r  #lum005 The ID Key belong to the Hanger number: ");
         if (numHa == 1) {
           Serial.println(numHa);
           baseMotor1();
@@ -551,19 +533,18 @@ void unloadHanger() {
         }
         lcd1.setCursor(0, 1);
         lcd1.print("Check the hanger");
-        delay(1500);
+        delay(2500);
         lcd1.clear();
-        Serial.println("  #lux0009  MySQL Connector operation for hangerNumber statement is finished.");
-        Serial.println("  #lux0007  Running MySQL Connector ooperation for updateHanger statement.");
+        Serial.println("  #lum006  MySQL Connector operation for hangerNumber statement is finished.\n\r  #lum007  Running MySQL Connector ooperation for updateHanger statement.");
         int unreserved = 1;
         int idKey = 0;
         sprintf(query, updateHanger, unreserved, idKey, numHa);
         // updateHanger[] = "UPDATE hanger.hanger SET hangerStatus = %d, idKey = %d WHERE hangerNumber = %d";
         mysqlCursor->execute(query);
-        Serial.println(" #lux007 MySQL Connector operation is finished.");
+        Serial.println(F("  #lum008 MySQL Connector operation is finished."));
       }
       else {
-        Serial.println("  #lux0007  Entered incorrect ID Key.");
+        Serial.println(F("  #luk003  Entered incorrect ID Key."));
         lcd1.clear();
         lcd1.setCursor(0, 0);
         lcd1.print("Incorrect ID Key");
@@ -573,11 +554,9 @@ void unloadHanger() {
         lcd1.clear();
 
       }
-      Serial.print("  #lux0015 Memory usage before deleting the MySQL Cursor / Packets: ");
-      Serial.println(memoryUsage());
+      Serial.println(String("") + "  #lum009 Memory usage before deleting the MySQL Cursor / Packets: " + memoryUsage());
       delete mysqlCursor;
-      Serial.print("  #lux0016 Memory usage after deteling the MySQL Cursor / Packets: ");
-      Serial.println(memoryUsage());
+      Serial.println(String("") + "  #lum010 Memory usage after deteling the MySQL Cursor / Packets: " + memoryUsage());
     } else {
       lcd1.clear();
       lcd1.print("ID Key doesnot");
@@ -589,7 +568,6 @@ void unloadHanger() {
     } clearTemp();
   }
 }
-
 
 //********************************************//
 //######::  ::   RFID-RC522 Read  ::  ::######//
