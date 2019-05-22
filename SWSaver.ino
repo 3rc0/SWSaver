@@ -18,6 +18,7 @@
     - LiquidCrystal I2C https://github.com/johnrickman/LiquidCrystal_I2C
     - MySQL Connector Arduino - Created by: Dr. Charles A. Bell https://github.com/ChuckBell/MySQL_Connector_Arduino
     - RFID - RC522 https://github.com/miguelbalboa/rfid
+    - http://aconcaguasci.blogspot.com/2017/01/sprintf-function-in-arduino.html
 
     +List of components:
 
